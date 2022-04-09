@@ -28,13 +28,24 @@ app.get('/api/persons', (request, response) => {
   response.json(persons)
 })
 
+app.get('/api/persons/:id', (request, response) => {
+  const id = Number(request.params.id)
+  const person = persons.find((p) => p.id === id)
+
+  if (!person) {
+    return response.status(404).send('Person not Found')
+  }
+
+  response.json(person)
+})
+
 app.get('/info', (request, response) => {
-  response.end(`
+  response.send(`
     <div>
     <p>Phonebook has info for ${persons.length} persons</p>
     <p>${new Date()}</p>
     </div>
-    `)
+  `)
 })
 
 const PORT = 3001
