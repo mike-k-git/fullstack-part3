@@ -15,7 +15,7 @@ app.use(
   morgan(':method :url :status :res[content-length] - :response-time ms :body')
 )
 
-app.get('/api/persons', (request, response) => {
+app.get('/api/persons', (_request, response) => {
   Person.find({}).then((persons) => response.json(persons))
 })
 
@@ -46,10 +46,12 @@ app.post('/api/persons', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  persons = persons.filter((p) => p.id !== id)
-
-  response.status(204).end()
+  Person.findByIdAndRemove(request.params.id)
+    .then((_result) => response.status(204).end())
+    .catch((error) => {
+      console.log(error)
+      return response.status(400).send({ error: 'malformatted id' })
+    })
 })
 
 app.get('/info', (request, response) => {
