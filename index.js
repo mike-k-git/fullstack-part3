@@ -7,7 +7,6 @@ const morgan = require('morgan')
 const cors = require('cors')
 
 const Person = require('./models/person')
-const e = require('express')
 
 app.use(express.static('build'))
 app.use(cors())
@@ -34,7 +33,7 @@ app.get('/api/persons/:id', (request, response, next) => {
     .catch((error) => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const body = request.body
 
   if (!body.name || !body.number) {
@@ -46,7 +45,10 @@ app.post('/api/persons', (request, response) => {
     number: body.number,
   })
 
-  person.save().then((savedPerson) => response.status(201).json(savedPerson))
+  person
+    .save()
+    .then((savedPerson) => response.status(201).json(savedPerson))
+    .catch((error) => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -95,6 +97,8 @@ const errorHandler = (error, _request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).send({ error: error.message })
   }
 
   next(error)
