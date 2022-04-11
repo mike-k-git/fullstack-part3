@@ -33,7 +33,7 @@ switch (action) {
     })
     break
 
-  case 'create':
+  case 'create': {
     const person = new Person({
       name: process.argv[3],
       number: process.argv[4],
@@ -44,4 +44,6 @@ switch (action) {
       console.log(`added ${name} number ${number} to phonebook`)
       mongoose.connection.close()
     })
+    break
+  }
 }
