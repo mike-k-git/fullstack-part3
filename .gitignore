@@ -105,3 +105,6 @@ dist
 
 # REST Client
 requests
+
+# Local DB
+db.json

@@ -1,16 +1,19 @@
 require('dotenv').config()
+
 const express = require('express')
-const morgan = require('morgan')
-const cors = require('cors')
-const Person = require('./models/person')
-
-morgan.token('body', (req) => JSON.stringify(req.body))
-
 const app = express()
 
-app.use(cors())
+const morgan = require('morgan')
+const cors = require('cors')
+
+const Person = require('./models/person')
+const e = require('express')
+
 app.use(express.static('build'))
+app.use(cors())
 app.use(express.json())
+
+morgan.token('body', (req) => JSON.stringify(req.body))
 app.use(
   morgan(':method :url :status :res[content-length] - :response-time ms :body')
 )
@@ -19,15 +22,16 @@ app.get('/api/persons', (_request, response) => {
   Person.find({}).then((persons) => response.json(persons))
 })
 
-app.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const person = persons.find((p) => p.id === id)
-
-  if (!person) {
-    return response.status(404).send('Person not Found')
-  }
-
-  response.json(person)
+app.get('/api/persons/:id', (request, response, next) => {
+  Person.findById(request.params.id)
+    .then((person) => {
+      if (person) {
+        response.json(person)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch((error) => next(error))
 })
 
 app.post('/api/persons', (request, response) => {
@@ -59,18 +63,32 @@ app.put('/api/persons/:id', (request, response, next) => {
   }
 
   Person.findByIdAndUpdate(request.params.id, person, { new: true })
-    .then((updatedPerson) => response.json(updatedPerson))
+    .then((updatedPerson) => {
+      if (updatedPerson) {
+        response.json(updatedPerson)
+      } else {
+        response.status(404).end()
+      }
+    })
     .catch((error) => next(error))
 })
 
-app.get('/info', (request, response) => {
-  response.send(`
+app.get('/info', (_request, response) => {
+  Person.count({}).then((result) => {
+    response.send(`
     <div>
-    <p>Phonebook has info for ${persons.length} persons</p>
+    <p>Phonebook has info for ${result} persons</p>
     <p>${new Date()}</p>
     </div>
   `)
+  })
 })
+
+const unknownEndpoint = (_request, response) => {
+  response.static(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
 
 const errorHandler = (error, _request, response, next) => {
   console.error(error.message)
